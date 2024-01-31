@@ -6,7 +6,6 @@ const port = 3001; // You can use any port you prefer
 const mysql = require('mysql2');
 app.use(cors());
 
-
 const connection = mysql.createConnection({
   host: '127.0.0.1',
   port: 3306,
@@ -15,7 +14,6 @@ const connection = mysql.createConnection({
   database: 'sakila',
   //insecureAuth: true,
 });
-
 
 connection.connect((err) => {
   if (err) {
@@ -46,15 +44,14 @@ app.get('/films', (req, res) => {
   });
 });
 
-/*app.get('/films', (req, res) => {
+app.get('/filmDetails/:filmId(\\d{3})', (req, res) => {
+  const filmId = req.query.film_id;
   const query = `
-    SELECT f.film_id, f.title, c.name 
-    FROM sakila.film f
-    LEFT JOIN sakila.film_category fc ON f.film_id = fc.film_id
-    LEFT JOIN sakila.category c ON c.category_id = fc.category_id;
+    SELECT title, description, release_year, rental_rate, special_features
+    FROM sakila.film
+    WHERE film_id = ?;
   `;
-
-  connection.query(query, (err, results) => {
+  connection.query(query, [filmId], (err, results) => {
     if (err) {
       console.error('Error executing query: ', err);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -62,8 +59,10 @@ app.get('/films', (req, res) => {
       res.json(results);
     }
   });
-}); */
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
