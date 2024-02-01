@@ -15,6 +15,7 @@ const connection = mysql.createConnection({
   //insecureAuth: true,
 });
 
+// connect to the mysql database
 connection.connect((err) => {
   if (err) {
     console.error('Error connecting to MySQL: ', err);
@@ -22,6 +23,7 @@ connection.connect((err) => {
     console.log('Connected to MySQL');
   }
 });
+
 
 app.get('/films', (req, res) => {
   const query = `SELECT f.film_id, f.title, c.name, count(f.film_id) as rented
@@ -44,19 +46,26 @@ app.get('/films', (req, res) => {
   });
 });
 
-app.get('/filmDetails/:filmId(\\d{3})', (req, res) => {
-  const filmId = req.query.film_id;
-  const query = `
+app.get('/filmDetails/:filmId', (req, res) => {
+  console.log('Request params:', req.params); // Added to log request parameters
+  const filmId = req.params.filmId; // Changed from req.query.filmId to req.params.filmId
+  console.log('Film ID:', filmId); // Added to log the extracted filmId
+  const filmDetailsQuery = `
     SELECT title, description, release_year, rental_rate, special_features
     FROM sakila.film
     WHERE film_id = ?;
   `;
-  connection.query(query, [filmId], (err, results) => {
+  connection.query(filmDetailsQuery, filmId, (err, results) => {
     if (err) {
       console.error('Error executing query: ', err);
       res.status(500).json({ error: 'Internal Server Error' });
     } else {
-      res.json(results);
+      console.log('Query results:', results); // Added to log the query results
+      if (results.length > 0) {
+        res.json(results[0]);
+      } else {
+        res.status(404).json({ error: 'Film not found' });
+      }
     }
   });
 });
