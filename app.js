@@ -25,7 +25,7 @@ connection.connect((err) => {
 });
 
 
-app.get('/films', (req, res) => {
+app.get('/topfivefilms', (req, res) => {
   const query = `SELECT f.film_id, f.title, c.name, count(f.film_id) as rented
   FROM sakila.film f
   join sakila.film_category fc on f.film_id = fc.film_id
@@ -69,6 +69,68 @@ app.get('/filmDetails/:filmId', (req, res) => {
     }
   });
 });
+
+app.get('/topfiveactors', (req, res) => {
+  const query = `SELECT a.actor_id, a.first_name, a.last_name, count(a.actor_id) as movies
+  FROM sakila.actor a
+  left join sakila.film_actor fa on a.actor_id = fa.actor_id
+  group by a.actor_id, a.first_name, a.last_name
+  order by movies DESC
+  limit 5;
+  `;
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+app.get('/actorsdetails/:filmId', (req, res) => {
+  console.log('Request params:', req.params); // Added to log request parameters
+  const filmId = req.params.filmId; // Changed from req.query.filmId to req.params.filmId
+  console.log('Film ID:', filmId); // Added to log the extracted filmId
+  const actorsDetailsQuery = `
+  WITH ActorFilmCounts AS (
+    SELECT a.actor_id, a.first_name, a.last_name, COUNT(fa.film_id) AS movies
+    FROM sakila.actor a
+    LEFT JOIN sakila.film_actor fa ON a.actor_id = fa.actor_id
+    GROUP BY a.actor_id, a.first_name, a.last_name
+    ORDER BY movies DESC
+    LIMIT 5
+    )
+
+    SELECT f.film_id, f.title, COUNT(r.rental_id) AS rental_count
+    FROM sakila.film_actor fa
+    JOIN ActorFilmCounts afc ON fa.actor_id = afc.actor_id
+    JOIN sakila.film f ON fa.film_id = f.film_id
+    JOIN sakila.film_category fc ON f.film_id = fc.film_id
+    JOIN sakila.category c ON fc.category_id = c.category_id
+    JOIN sakila.inventory i ON f.film_id = i.film_id
+    JOIN sakila.rental r ON i.inventory_id = r.inventory_id
+    WHERE fa.actor_id = ? 
+    GROUP BY f.film_id, f.title
+    ORDER BY COUNT(r.rental_id) DESC
+    LIMIT 5;
+
+  `;
+  connection.query(actorsDetailsQuery, filmId, (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      console.log('Query results:', results); // Added to log the query results
+      if (results.length > 0) {
+        res.json(results[0]);
+      } else {
+        res.status(404).json({ error: 'Film not found' });
+      }
+    }
+  });
+});
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
