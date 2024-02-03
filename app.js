@@ -100,9 +100,9 @@ app.get('/actorsdetails/:filmId', (req, res) => {
     GROUP BY a.actor_id, a.first_name, a.last_name
     ORDER BY movies DESC
     LIMIT 5
-    )
+  )
 
-    SELECT f.film_id, f.title, COUNT(r.rental_id) AS rental_count
+    SELECT f.film_id, f.title, COUNT(r.rental_id) AS rental_count, a.first_name, a.last_name
     FROM sakila.film_actor fa
     JOIN ActorFilmCounts afc ON fa.actor_id = afc.actor_id
     JOIN sakila.film f ON fa.film_id = f.film_id
@@ -110,11 +110,11 @@ app.get('/actorsdetails/:filmId', (req, res) => {
     JOIN sakila.category c ON fc.category_id = c.category_id
     JOIN sakila.inventory i ON f.film_id = i.film_id
     JOIN sakila.rental r ON i.inventory_id = r.inventory_id
-    WHERE fa.actor_id = ? 
+    join sakila.actor a on fa.actor_id = a.actor_id
+    WHERE fa.actor_id = 102 
     GROUP BY f.film_id, f.title
     ORDER BY COUNT(r.rental_id) DESC
     LIMIT 5;
-
   `;
   connection.query(actorsDetailsQuery, filmId, (err, results) => {
     if (err) {
@@ -123,7 +123,7 @@ app.get('/actorsdetails/:filmId', (req, res) => {
     } else {
       console.log('Query results:', results); // Added to log the query results
       if (results.length > 0) {
-        res.json(results[0]);
+        res.json(results); // Changed from res.json(results[0]) to res.json(results) to return all results
       } else {
         res.status(404).json({ error: 'Film not found' });
       }
@@ -135,5 +135,3 @@ app.get('/actorsdetails/:filmId', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-
-
