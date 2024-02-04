@@ -47,9 +47,9 @@ app.get('/topfivefilms', (req, res) => {
 });
 
 app.get('/filmDetails/:filmId', (req, res) => {
-  console.log('Request params:', req.params); // Added to log request parameters
-  const filmId = req.params.filmId; // Changed from req.query.filmId to req.params.filmId
-  console.log('Film ID:', filmId); // Added to log the extracted filmId
+  console.log('Request params:', req.params); 
+  const filmId = req.params.filmId; 
+  console.log('Film ID:', filmId); 
   const filmDetailsQuery = `
     SELECT title, description, release_year, rental_rate, special_features
     FROM sakila.film
@@ -89,9 +89,9 @@ app.get('/topfiveactors', (req, res) => {
 });
 
 app.get('/actorsdetails/:filmId', (req, res) => {
-  console.log('Request params:', req.params); // Added to log request parameters
-  const filmId = req.params.filmId; // Changed from req.query.filmId to req.params.filmId
-  console.log('Film ID:', filmId); // Added to log the extracted filmId
+  console.log('Request params:', req.params); 
+  const filmId = req.params.filmId; 
+  console.log('Film ID:', filmId); 
   const actorsDetailsQuery = `
   WITH ActorFilmCounts AS (
     SELECT a.actor_id, a.first_name, a.last_name, COUNT(fa.film_id) AS movies
@@ -111,7 +111,7 @@ app.get('/actorsdetails/:filmId', (req, res) => {
     JOIN sakila.inventory i ON f.film_id = i.film_id
     JOIN sakila.rental r ON i.inventory_id = r.inventory_id
     join sakila.actor a on fa.actor_id = a.actor_id
-    WHERE fa.actor_id = 102 
+    WHERE fa.actor_id = ? 
     GROUP BY f.film_id, f.title
     ORDER BY COUNT(r.rental_id) DESC
     LIMIT 5;
@@ -130,6 +130,23 @@ app.get('/actorsdetails/:filmId', (req, res) => {
     }
   });
 });
+
+
+app.get('/searchMoviesTitle/:movieTitle', (req, res) => {
+  const movieTitle = req.params.movieTitle;
+  const query = `SELECT title, description, release_year, rating, special_features, rental_rate FROM sakila.film
+  WHERE title LIKE ?
+  `;
+  connection.query(query, [`%${movieTitle}%`], (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 
 
 app.listen(port, () => {
