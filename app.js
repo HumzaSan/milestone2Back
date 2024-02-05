@@ -134,10 +134,28 @@ app.get('/actorsdetails/:filmId', (req, res) => {
 
 app.get('/searchMoviesTitle/:movieTitle', (req, res) => {
   const movieTitle = req.params.movieTitle;
-  const query = `SELECT title, description, release_year, rating, special_features, rental_rate FROM sakila.film
+  const query = `SELECT film_id, title, description, release_year, rating, special_features, rental_rate FROM sakila.film
   WHERE title LIKE ?
   `;
   connection.query(query, [`%${movieTitle}%`], (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+
+app.get('/searchMoviesActor/:movieActor', (req, res) => {
+  const movieActor = req.params.movieActor;
+  const query = `SELECT f.film_id, f.title, f.release_year, a.first_name FROM sakila.film f
+  left join sakila.film_actor fa on f.film_id = fa.film_id
+  left join sakila.actor a on fa.actor_id = a.actor_id
+  WHERE a.first_name LIKE ?
+  `;
+  connection.query(query, [`%${movieActor}%`], (err, results) => {
     if (err) {
       console.error('Error executing query: ', err);
       res.status(500).json({ error: 'Internal Server Error' });
