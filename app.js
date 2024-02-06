@@ -165,6 +165,25 @@ app.get('/searchMoviesActor/:movieActor', (req, res) => {
   });
 });
 
+app.get('/searchMoviesGenra/:movieGenra', (req, res) => {
+  const movieGenra = req.params.movieGenra;
+  const query = `SELECT distinct f.film_id, f.title, f.release_year FROM sakila.film f 
+  join sakila.film_category fc on f.film_id = fc.film_id
+  join sakila.category c on fc.category_id = c.category_id
+  join sakila.film_actor fa on f.film_id = fa.film_id
+  join sakila.actor a on fa.actor_id = a.actor_id
+  WHERE c.name LIKE ?
+  `;
+  connection.query(query, [`%${movieGenra}%`], (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 
 
 app.listen(port, () => {
