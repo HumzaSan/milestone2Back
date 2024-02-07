@@ -50,12 +50,12 @@ app.get('/filmDetails/:filmId', (req, res) => {
   console.log('Request params:', req.params); 
   const filmId = req.params.filmId; 
   console.log('Film ID:', filmId); 
-  const filmDetailsQuery = `
+  const filmQuery = `
     SELECT title, description, release_year, rental_rate, special_features
     FROM sakila.film
     WHERE film_id = ?;
   `;
-  connection.query(filmDetailsQuery, filmId, (err, results) => {
+  connection.query(filmQuery, filmId, (err, results) => {
     if (err) {
       console.error('Error executing query: ', err);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -165,8 +165,8 @@ app.get('/searchMoviesActor/:movieActor', (req, res) => {
   });
 });
 
-app.get('/searchMoviesGenra/:movieGenra', (req, res) => {
-  const movieGenra = req.params.movieGenra;
+app.get('/searchMoviesGenre/:movieGenre', (req, res) => {
+  const movieGenre = req.params.movieGenre;
   const query = `SELECT distinct f.film_id, f.title, f.release_year FROM sakila.film f 
   join sakila.film_category fc on f.film_id = fc.film_id
   join sakila.category c on fc.category_id = c.category_id
@@ -174,12 +174,41 @@ app.get('/searchMoviesGenra/:movieGenra', (req, res) => {
   join sakila.actor a on fa.actor_id = a.actor_id
   WHERE c.name LIKE ?
   `;
-  connection.query(query, [`%${movieGenra}%`], (err, results) => {
+  connection.query(query, [`%${movieGenre}%`], (err, results) => {
     if (err) {
       console.error('Error executing query: ', err);
       res.status(500).json({ error: 'Internal Server Error' });
     } else {
       res.json(results);
+    }
+  });
+});
+
+app.get('/modalFilmDetails/:filmId', (req, res) => {
+  console.log('Request params:', req.params); 
+  const filmId = req.params.filmId; 
+  console.log('Film ID:', filmId); 
+  const movieDetailsQuery = `
+  SELECT distinct f.title, description, GROUP_CONCAT(CONCAT(a.first_name,' ',a.last_name) ORDER BY a.actor_id SEPARATOR ', ') AS actor_names, 
+  c.name, f.release_year, f.rating, f.special_features, f.rental_rate FROM sakila.film f
+  join sakila.film_category fc on f.film_id = fc.film_id
+  join sakila.category c on fc.category_id = c.category_id
+  join sakila.film_actor fa on f.film_id = fa.film_id
+  join sakila.actor a on fa.actor_id = a.actor_id
+  WHERE f.film_id = ?
+  GROUP BY f.title, f.description, c.name, f.release_year, f.rating, f.special_features, f.rental_rate;
+  `;
+  connection.query(movieDetailsQuery, filmId, (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      console.log('Query results:', results); // Added to log the query results
+      if (results.length > 0) {
+        res.json(results[0]);
+      } else {
+        res.status(404).json({ error: 'Film not found' });
+      }
     }
   });
 });
