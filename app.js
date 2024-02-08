@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = 3001; // You can use any port you prefer
+app.use(express.json());
 
 const mysql = require('mysql2');
 app.use(cors());
@@ -209,6 +210,25 @@ app.get('/modalFilmDetails/:filmId', (req, res) => {
       } else {
         res.status(404).json({ error: 'Film not found' });
       }
+    }
+  });
+});
+
+// rent button
+app.post('/customerMovieRental/:customerID/:inventoryID', (req, res) => {
+  // Assuming `customer_id` and `inventory_id` are sent in the request body
+  console.log('Request params:', req.params); 
+  const customerID = req.params.customerID;
+  const inventoryID = req.params.inventoryID;
+  //const { customer_id, inventory_id } = req.body;
+  const customerMovieRental = 'INSERT INTO sakila.rental (rental_date, inventory_id, customer_id, return_date, staff_id) VALUES (?, ?, ?, ?, ?)';
+  const values = ["02/08/2024", inventoryID, customerID, null, "1"]; // Assuming `return_date` can be NULL initially
+  connection.query(customerMovieRental, values, (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
     }
   });
 });
