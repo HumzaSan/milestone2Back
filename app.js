@@ -239,6 +239,19 @@ app.post('/test/:filmId', (res, req) => {
 }
 );
 
+
+app.get('/showAllCustomers', (req, res) => {
+  const query = `SELECT customer_id, first_name, last_name FROM sakila.customer;`;
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
