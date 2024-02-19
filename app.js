@@ -252,6 +252,48 @@ app.get('/showAllCustomers', (req, res) => {
   });
 });
 
+app.get('/filterByCustomersID/:custID', (req, res) => {
+  const query = `SELECT customer_id, first_name, last_name FROM sakila.customer
+  where customer_id = ?`;
+  const custID = req.params.custID;
+  connection.query(query, custID, (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+app.get('/filterByCustomersFirstName/:fName', (req, res) => {
+  const query = `SELECT customer_id, first_name, last_name FROM sakila.customer c
+  where c.first_name LIKE ?`;
+  const fName = req.params.fName;
+  connection.query(query, [`%${fName}%`], (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+app.get('/filterByCustomersLastName/:lName', (req, res) => {
+  const query = `SELECT customer_id, first_name, last_name FROM sakila.customer c
+  where c.last_name LIKE ?`;
+  const lName = req.params.lName;
+  connection.query(query, [`%${lName}%`], (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
