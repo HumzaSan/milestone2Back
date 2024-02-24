@@ -294,6 +294,37 @@ app.get('/filterByCustomersLastName/:lName', (req, res) => {
   });
 });
 
+// work on this later
+app.post('/addMovieReview', (req, res) => {
+  // Extracting data sent in the request body
+  const { movieId, review, rating } = req.body;
+
+  // Here you would typically insert the review into a database.
+  // For demonstration, we'll just log it and return a success message.
+  console.log(`Adding review for movie ID ${movieId}: ${review} with rating ${rating}`);
+
+  // Responding with a success message
+  res.status(201).json({ message: 'Review added successfully!' });
+});
+
+
+app.delete('/deleteCustomerById/:custID', (req, res) => {
+  const query = `DELETE FROM sakila.customer WHERE customer_id LIKE ?`;
+  const custID = req.params.custID;
+  connection.query(query, [`%${custID}%`], (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      if (results.affectedRows > 0) {
+        res.json({ message: `${results.affectedRows} customer(s) deleted successfully.` });
+      } else {
+        res.status(404).json({ message: 'No customers found with the given ID.' });
+      }
+    }
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
