@@ -325,6 +325,22 @@ app.delete('/deleteCustomerById/:custID', (req, res) => {
   });
 });
 
+app.post('/addNewCustomerInfo', express.json(), (req, res) => {
+  const { user_address, user_district, user_city_id, user_postal_code, user_phone } = req.body;
+
+  const insertQuery = 'INSERT INTO sakila.address (address, district, city_id, postal_code, phone, location, last_update) VALUES (?, ?, ?, ?, ?, ST_GeomFromText(\'POINT(1 2)\'), CURRENT_TIMESTAMP)';
+  const values = [user_address, user_district, user_city_id, user_postal_code, user_phone];
+
+  connection.query(insertQuery, values, (err, results) => {
+    if (err) {
+      console.error('Error inserting new customer: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json({ message: 'New customer added successfully' });
+    }
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
