@@ -346,6 +346,23 @@ app.post('/addNewCustomerInfo', express.json(), (req, res) => {
   });
 });
 
+app.get('/getCustomerDetails/:custID', (req, res) => {
+  const query = `SELECT c.customer_id, c.first_name, c.last_name, c.email, a.address, a.district, a.phone, a.postal_code, r.rental_id, r.rental_date, r.return_date FROM sakila.customer c
+    join sakila.rental r on r.customer_id = c.customer_id
+    join sakila.address a on c.address_id = a.address_id
+    where store_id = 1 and c.customer_id = ?
+    order by return_date DESC`;
+  const custID = req.params.custID;
+  connection.query(query, custID, (err, results) => {
+    if (err) {
+      console.error('Error executing query: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
