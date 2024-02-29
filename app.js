@@ -360,7 +360,7 @@ app.post('/addNewCustomerInfo', express.json(), async (req, res) => {
     return res.status(400).json({ error: 'Missing part 2 of customer' });
   }
 
-  // Step 1: Insert address information
+ 
   const insertAddressQuery = 'INSERT INTO sakila.address (address_id, address, district, city_id, postal_code, phone, location, last_update) VALUES (NULL, ?, ?, ?, ?, ?, ST_GeomFromText(\'POINT(1 2)\'), CURRENT_TIMESTAMP)';
   const addressValues = [user_address, user_district, user_city_id, user_postal_code, user_phone];
 
@@ -375,11 +375,11 @@ app.post('/addNewCustomerInfo', express.json(), async (req, res) => {
       });
     });
 
-    // Step 2: Retrieve the address_id
+  
     const addressId = addressInsertResult.insertId;
     console.log('obtained Address ID:', addressId);
 
-    // Step 3: Insert customer information
+    
     const insertCustomerQuery = 'INSERT INTO sakila.customer (customer_id, store_id, first_name, last_name, email, address_id, active, create_date, last_update) VALUES (NULL, 1, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)';
     const customerValues = [user_first_name, user_last_name, user_email, addressId];
 
