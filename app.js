@@ -325,7 +325,8 @@ app.delete('/deleteCustomerById/:custID', (req, res) => {
   });
 });
 
-app.post('/addNewCustomerInfo', express.json(), (req, res) => {
+app.post('/test', express.json(), (req, res) => {
+  console.log('Received data:', req.body);
   const { user_address, user_district, user_city_id, user_postal_code, user_phone } = req.body;
 
   // Check if required fields are present in the request body
@@ -346,6 +347,56 @@ app.post('/addNewCustomerInfo', express.json(), (req, res) => {
   });
 });
 
+app.post('/addNewCustomerInfo', express.json(), async (req, res) => {
+  console.log('Received data:', req.body);
+  //const { user_address, user_district, user_city_id, user_postal_code, user_phone, user_first_name, user_last_name, user_email } = req.body;
+  const { user_first_name, user_last_name, user_email, user_address, user_district, user_city_id, user_postal_code, user_phone } = req.body;
+
+  // Check if required fields are present in the request body
+  if (!user_address || !user_district || !user_city_id || !user_postal_code || !user_phone ) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  if (!user_first_name || !user_last_name || !user_email ) {
+    return res.status(400).json({ error: 'Missing part 2 of customer' });
+  }
+
+  // Step 1: Insert address information
+  const insertAddressQuery = 'INSERT INTO sakila.address (address_id, address, district, city_id, postal_code, phone, location, last_update) VALUES (NULL, ?, ?, ?, ?, ?, ST_GeomFromText(\'POINT(1 2)\'), CURRENT_TIMESTAMP)';
+  const addressValues = [user_address, user_district, user_city_id, user_postal_code, user_phone];
+
+  try {
+    const addressInsertResult = await new Promise((resolve, reject) => {
+      connection.query(insertAddressQuery, addressValues, (err, results) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(results);
+        }
+      });
+    });
+
+    // Step 2: Retrieve the address_id
+    const addressId = addressInsertResult.insertId;
+    console.log('obtained Address ID:', addressId);
+
+    // Step 3: Insert customer information
+    const insertCustomerQuery = 'INSERT INTO sakila.customer (customer_id, store_id, first_name, last_name, email, address_id, active, create_date, last_update) VALUES (NULL, 1, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)';
+    const customerValues = [user_first_name, user_last_name, user_email, addressId];
+
+    connection.query(insertCustomerQuery, customerValues, (err, customerInsertResult) => {
+      if (err) {
+        console.error('Error inserting new customer: ', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+      } else {
+        res.json({ message: 'New customer added successfully' });
+      }
+    });
+  } catch (error) {
+    console.error('Error inserting new address: ', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 app.get('/getCustomerDetails/:custID', (req, res) => {
   const query = `SELECT c.customer_id, c.first_name, c.last_name, c.email, a.address, a.district, a.phone, a.postal_code, r.rental_id, r.rental_date, r.return_date FROM sakila.customer c
     join sakila.rental r on r.customer_id = c.customer_id
@@ -359,6 +410,26 @@ app.get('/getCustomerDetails/:custID', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
     } else {
       res.json(results);
+    }
+  });
+});
+
+app.put('/updateCustomerAddress/:movieId', (req, res) => {
+  const movieId = req.params.movieId;
+  const { title, description, release_year, rental_rate } = req.body;
+  const updateQuery = `
+    UPDATE sakila.film
+    SET title = ?, description = ?, release_year = ?, rental_rate = ?
+    WHERE film_id = ?;
+  `;
+  const values = [title, description, release_year, rental_rate, movieId];
+
+  connection.query(updateQuery, values, (err, results) => {
+    if (err) {
+      console.error('Error updating movie: ', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json({ message: 'Movie updated successfully' });
     }
   });
 });
